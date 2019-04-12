@@ -1,0 +1,6 @@
+name = SP Nginx Cache Clear Rules: www.sp.nl
+
+package = sprbs
+dependencies[] = sp_nginx_cache_clear
+
+core = 7.x

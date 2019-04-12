@@ -1,0 +1,145 @@
+<?php
+
+/**
+ * @file
+ * Nginx Cache Clear module.
+ */
+
+/**
+ * Implements hook_menu().
+ *
+ * This hook help to add configration menu.
+ * Configuration->System->Cache Manager.
+ */
+function sp_nginx_cache_clear_menu() {
+  $items = array();
+
+  $items['admin/config/sp/nginx-cache'] = array(
+    'title' => 'Nginx Cache Clear',
+    'description' => 'Configure the nginx cache settings in drupal',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sp_nginx_cache_clear_admin_settings'),
+    'access arguments' => array('administer cache manager'),
+    'file' => 'includes/sp_nginx_cache_clear.admin.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function sp_nginx_cache_clear_permission() {
+  return [
+    'administer cache manager' => [
+      'title' => t('Administer cache manager'),
+      'description' => t('Configure nginx cache settings.'),
+    ],
+  ];
+}
+
+/**
+ * Implements hook_node_update().
+ *
+ * This hook is invoked when the user update any node.
+ * In the settings page, if the option 'Auto clear cache when content edit'
+ * is enabled, this hook will checks the cache file and delete
+ * the same for the node.
+ */
+function sp_nginx_cache_clear_node_update($node) {
+  // Checking the configuration of auto delete.
+  if (!variable_get('sp_nginx_cache_clear_auto_delete', '')) {
+    return;
+  }
+  $regex = ltrim(url("node/$node->nid", array('absolute' => FALSE)), '/');
+
+  sp_nginx_cache_clear_clear_regex($regex);
+}
+
+/**
+ * Implements hook_admin_menu_cache_info().
+ *
+ * This hook helps to add the sub-menu in "flush all cache".
+ */
+function sp_nginx_cache_clear_admin_menu_cache_info() {
+  $caches['server_cache_all'] = array('title' => t('Nginx'), 'callback' => 'sp_nginx_cache_clear_clear_server_cache_all');
+  $caches['server_cache_current_page'] = array('title' => t('Nginx current page only'), 'callback' => 'sp_nginx_cache_clear_clear_server_cache_current_page');
+  return $caches;
+}
+
+/**
+ * Callback from sp_nginx_cache_clear_admin_menu_cache_info().
+ *
+ * The callback helps to clear the cache of current url when
+ * user clicks on the menu 'flush all cache -> Proxy/CGI Cache'.
+ */
+function sp_nginx_cache_clear_clear_server_cache_all() {
+  sp_nginx_cache_clear_clear_regex('.*');
+}
+
+/**
+ * Callback from sp_nginx_cache_clear_admin_menu_cache_info().
+ *
+ * The callback helps to clear the cache of current url when
+ * user clicks on the menu 'flush all cache -> Proxy/CGI Cache'.
+ */
+function sp_nginx_cache_clear_clear_server_cache_current_page() {
+  $current_path = $_SERVER['HTTP_REFERER'];
+  sp_nginx_cache_clear_clear_regex($current_path);
+}
+
+/**
+ * Core function implementation sp_nginx_cache_clear_clear_regex($url)
+ *
+ * This function helps to delete the Nginx files in the server. This
+ * reads the configuration settings in the module and check the file
+ * exist or not in that folder with the specific key format, if exist it will
+ * delete that cache file.
+ *
+ * @params
+ * String $url - [optional] Absolute url of the file to clear
+ *
+ * @return bool
+ *   true/false
+ */
+function sp_nginx_cache_clear_clear_regex($regex = '') {
+
+  global $base_url;
+  $regex = trim($regex);
+  $regex = preg_replace('`' . preg_quote($base_url) . '`', '', $regex);
+  $regex = ltrim($regex, '/');
+  if ($regex == '<front>') {
+    $regex = '';
+  }
+  $url = $base_url . '/' . $regex;
+  drupal_set_message('Purge nginx cache using url: ' . $url);
+  $url = $base_url . '/' . urlencode($regex);
+  $parse = parse_url($url);
+
+  $header = array
+    (
+      "Host: " . $parse['host'], // IMPORTANT
+      "Accept: text/plain,text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.3",
+      "Accept-Encoding: gzip,deflate,sdch",
+      "Accept-Language: it-IT,it;q=0.8,en-US;q=0.6,en;q=0.4",
+      "Cache-Control: max-age=0",
+      "Connection: keep-alive",
+    );
+
+  $curlOptionList = array(
+    CURLOPT_URL                     => $url,
+    CURLOPT_HTTPHEADER              => $header,
+    CURLOPT_CUSTOMREQUEST           => "PURGE",
+    CURLOPT_VERBOSE                 => true,
+    CURLOPT_RETURNTRANSFER          => true,
+    CURLOPT_NOBODY                  => true,
+    CURLOPT_CONNECTTIMEOUT_MS       => 2000,
+  );
+
+  $curlHandler = curl_init();
+  curl_setopt_array( $curlHandler, $curlOptionList );
+  $result = curl_exec( $curlHandler );
+  curl_close( $curlHandler );
+}

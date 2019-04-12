@@ -1,0 +1,9 @@
+name=SP Nginx Cache Clear
+description = The module is used to manage the cache of the appliaction. This Module helps to manage the Nginx cache of the page depend on the server config. Nginx needs to be configured with PURGE request regex path purging.
+
+package = sprbs
+dependencies[] = sprbs
+dependencies[] = rules
+
+core = 7.x
+configure = admin/config/sp/nginx-cache
