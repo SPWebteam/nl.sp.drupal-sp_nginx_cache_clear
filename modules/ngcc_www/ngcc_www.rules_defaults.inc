@@ -25,14 +25,7 @@ function ngcc_www_default_rules_configuration() {
         }}
     ],
     "DO" : [
-      { "sp_nginx_cache_clear_regex" : { "regex" : "[node:url]\r\n(nu|nu\/js|nu\/filter)(\?page=\d+)?\r\n(nu|nu\/js|nu\/filter)\?(page=\d+)?.*(\u0026?type=[node:content-type]).*\r\nonze-mensen\/.*" } },
-      { "LOOP" : {
-          "USING" : { "list" : [ "node:thema" ] },
-          "ITEM" : { "thema_item" : "Thema" },
-          "DO" : [
-            { "sp_nginx_cache_clear_regex" : { "regex" : "(nu|nu\/js|nu\/filter)\?(page=\d+)?.*thema=[thema-item:nid].*" } }
-          ]
-      }}
+      { "sp_nginx_cache_clear_regex" : { "regex" : "[node:url]\r\n(nu|nu\/.*)\r\nonze-mensen\/.*" } }
     ]
   }}';
   $configs['rules_nginx_clear_nu_item'] = rules_import($rule);
