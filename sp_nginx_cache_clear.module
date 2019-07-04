@@ -130,16 +130,19 @@ function sp_nginx_cache_clear_clear_regex($regex = '') {
 
   $curlOptionList = array(
     CURLOPT_URL                     => $url,
+    //CURLOPT_HEADER                  => 1,
     CURLOPT_HTTPHEADER              => $header,
     CURLOPT_CUSTOMREQUEST           => "PURGE",
+    CURLOPT_HTTP_VERSION            => CURL_HTTP_VERSION_2_0,
     CURLOPT_VERBOSE                 => true,
     CURLOPT_RETURNTRANSFER          => true,
-    CURLOPT_NOBODY                  => true,
+    CURLOPT_NOBODY                  => false,
     CURLOPT_CONNECTTIMEOUT_MS       => 2000,
   );
 
   $curlHandler = curl_init();
   curl_setopt_array( $curlHandler, $curlOptionList );
   $result = curl_exec( $curlHandler );
+  watchdog('SP nginx cache clear', '<pre>' . $result . '</pre>');
   curl_close( $curlHandler );
 }

@@ -25,7 +25,7 @@ function ngcc_www_default_rules_configuration() {
         }}
     ],
     "DO" : [
-      { "sp_nginx_cache_clear_regex" : { "regex" : "[node:url]\r\n(nu|nu\/.*)\r\nonze-mensen\/.*" } }
+      { "sp_nginx_cache_clear_regex" : { "regex" : "[node:url]\r\nnu.*\r\nonze-mensen\/.*" } }
     ]
   }}';
   $configs['rules_nginx_clear_nu_item'] = rules_import($rule);
